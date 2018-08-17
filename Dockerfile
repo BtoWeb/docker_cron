@@ -93,13 +93,13 @@ EXPOSE 80
 
 ### Installation des sources
 RUN wget https://github.com/BtoWeb/docker_cron/archive/master.zip -O /tmp/master.zip \
-	&& unzip /tmp/master.zip \
-	&& mv /tmp/docker_cron-master/docker/supervisord.conf /etc/supervisord.conf
+	&& unzip /tmp/master.zip -d /tmp \
+	&& mv /tmp/docker_cron-master/docker/supervisord.conf /etc/supervisord.conf \
 	&& mv /tmp/docker_cron-master/* /var/www/ \
 	&& rm -rf /tmp/docker_cron-master/ /tmp/master.zip
 
-RUN ls -la && composer install \
-    && chown -R www-data: /var/www/
+RUN chown -R www-data: /var/www/ \
+    && su www-data -s /bin/bash -c "composer install"
 
 # Programme de démarrage
 COPY ./docker/run.sh /run.sh
