@@ -1,0 +1,15 @@
+version: '2.1'
+services:
+  docker_cron_mysql:
+    container_name: docker_cron_mysql
+    image: mariadb:latest
+
+  docker_cron_php:
+      container_name: docker_cron_php
+      image: docker_cron
+      environment:
+        - APP_ENV=prod
+        - DATABASE_DRIVER=pdo_sqlite
+        - DATABASE_URL=sqlite:////var/www/var/cron.db
+      volumes:
+        - //var/run/docker.sock:/var/run/docker.sock

@@ -1,0 +1,9 @@
+twig:
+    paths: [~, '%kernel.project_dir%/templates', '/var/www/vendor/jms/job-queue-bundle/JMS/JobQueueBundle/Resources']
+    debug: '%kernel.debug%'
+    strict_variables: '%kernel.debug%'
+
+
+framework:
+    templating:
+        engines: ['twig']

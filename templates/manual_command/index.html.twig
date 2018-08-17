@@ -1,0 +1,45 @@
+{% extends "base.html.twig" %}
+
+{% block content %}
+    <h1>
+        <div class="page-header">Overview</div>
+    </h1>
+
+    <table class="table table-bordered table-striped table-condensed">
+        <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Commande</th>
+            <th>Container</th>
+            <th>Utilisateur</th>
+            <th>Exécution</th>
+        </tr>
+        </thead>
+
+        <tbody>
+
+        {% for command in commands %}
+            <tr>
+                <td>{{ command.name }}</td>
+                <td>{{ command.command }}</td>
+                <td>{{ command.containerName }}</td>
+                <td>{{ command.user }}</td>
+                <td>
+                    <form class="form-inline" method="post">
+                        <input type="hidden" name="command" value="{{ command.id }}">
+                        {% for parameter in command.parameters %}
+                            <input type="text" name="parameter[{{ parameter }}]" class="form-control" placeholder="{{ parameter }}" value="">
+                        {% endfor %}
+
+                        <input type="submit" class="btn btn-primary" value="Executer">
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="6">There are no jobs.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
