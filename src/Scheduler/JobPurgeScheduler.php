@@ -21,6 +21,15 @@ use JMS\JobQueueBundle\Entity\Job;
  */
 class JobPurgeScheduler implements JobScheduler
 {
+    /**
+     * @var EntityRepository
+     */
+    protected $jobRepository;
+/*
+    public function __construct(Registry $registry)
+    {
+        $this->jobRepository = $registry->getRepository('JMSJobQueueBundle:Job');
+    }*/
 
     /**
      * @param string $command
@@ -30,7 +39,11 @@ class JobPurgeScheduler implements JobScheduler
      */
     public function shouldSchedule($command, \DateTime $lastRunAt)
     {
-        return (time() - $lastRunAt->getTimestamp()) >= 86400;
+        // Toutes les 30 minutes uniquement
+        if ((time() - $lastRunAt->getTimestamp()) >= 1800) {
+            // TODO : A coder
+            return true;
+        }
     }
 
     /**
@@ -41,7 +54,8 @@ class JobPurgeScheduler implements JobScheduler
      */
     public function createJob($command, \DateTime $lastRunAt)
     {
-        return new Job('jms-job-queue:clean-up', ['--per-call=100000']);
+        // TODO : A Améliorer
+        return new Job('jms-job-queue:clean-up');
 
     }
 }

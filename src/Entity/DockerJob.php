@@ -34,7 +34,7 @@ class DockerJob
     protected $cronTask;
 
     /**
-     * @ORM\ManyToOne(targetEntity="JMS\JobQueueBundle\Entity\Job", cascade={"persist", "delete"})
+     * @ORM\ManyToOne(targetEntity="JMS\JobQueueBundle\Entity\Job", cascade={"persist", "remove"})
      * @var Job
      */
     protected $job;
