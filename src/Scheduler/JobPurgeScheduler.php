@@ -41,7 +41,7 @@ class JobPurgeScheduler implements JobScheduler
      */
     public function createJob($command, \DateTime $lastRunAt)
     {
-        return new Job('jms-job-queue:clean-up');
+        return new Job('jms-job-queue:clean-up', ['--per-call=100000']);
 
     }
 }
