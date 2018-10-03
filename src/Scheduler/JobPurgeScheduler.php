@@ -9,6 +9,9 @@
 namespace App\Scheduler;
 
 
+use App\Entity\DockerJob;
+use Doctrine\Bundle\DoctrineBundle\Registry;
+use Doctrine\ORM\EntityRepository;
 use JMS\DiExtraBundle\Annotation as DI;
 use JMS\JobQueueBundle\Cron\JobScheduler;
 use JMS\JobQueueBundle\Entity\Job;
@@ -22,14 +25,20 @@ use JMS\JobQueueBundle\Entity\Job;
 class JobPurgeScheduler implements JobScheduler
 {
     /**
+     * @var \Doctrine\Common\Persistence\ObjectManager|object
+     */
+    protected $em;
+
+    /**
      * @var EntityRepository
      */
     protected $jobRepository;
-/*
+
     public function __construct(Registry $registry)
     {
-        $this->jobRepository = $registry->getRepository('JMSJobQueueBundle:Job');
-    }*/
+        $this->em = $registry->getManager();
+        $this->jobRepository = $registry->getRepository('App:DockerJob');
+    }
 
     /**
      * @param string $command
@@ -41,7 +50,6 @@ class JobPurgeScheduler implements JobScheduler
     {
         // Toutes les 30 minutes uniquement
         if ((time() - $lastRunAt->getTimestamp()) >= 1800) {
-            // TODO : A coder
             return true;
         }
     }
@@ -54,8 +62,23 @@ class JobPurgeScheduler implements JobScheduler
      */
     public function createJob($command, \DateTime $lastRunAt)
     {
-        // TODO : A Améliorer
-        return new Job('jms-job-queue:clean-up');
+        $now = new \DateTime();
+        $now->modify("-2 days");
+
+        // Supprimer les DockerJob dont on a plus besoin
+        /** @var DockerJob[] $dockerJobs */
+        $dockerJobs = $this->jobRepository->createQueryBuilder('d')
+            ->innerJoin('d.job', 'j')
+            ->where('j.createdAt <= :maxdate')
+            ->setParameter('maxDate', $now)
+            ->getQuery()->getResult();
+
+        foreach ($dockerJobs as $dockerJob) {
+            $this->em->remove($dockerJob);
+        }
+        $this->em->flush();
+
+        return new Job('jms-job-queue:clean-up', ['--per-call=10000']);
 
     }
 }

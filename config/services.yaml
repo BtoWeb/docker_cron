@@ -32,3 +32,9 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+
+    App\Scheduler\JobPurgeScheduler:
+        arguments: ["@doctrine"]
+        tags:
+            - { name: "jms_job_queue.scheduler", command: "jms-job-queue:clean-up" }
