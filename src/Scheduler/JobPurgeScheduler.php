@@ -57,23 +57,6 @@ class JobPurgeScheduler implements JobScheduler
      */
     public function createJob($command, \DateTime $lastRunAt)
     {
-        $now = new \DateTime();
-        $now->modify("-2 days");
-
-        // Supprimer les DockerJob dont on a plus besoin
-        /** @var DockerJob[] $dockerJobs */
-        $dockerJobs = $this->jobRepository->createQueryBuilder('d')
-            ->innerJoin('d.job', 'j')
-            ->where('j.createdAt <= :maxdate')
-            ->setParameter('maxDate', $now)
-            ->getQuery()->getResult();
-
-        foreach ($dockerJobs as $dockerJob) {
-            $this->em->remove($dockerJob);
-        }
-        $this->em->flush();
-
-        return new Job('jms-job-queue:clean-up', ['--per-call=10000']);
-
+        return new Job('jms-job-queue:clean-up');
     }
 }
