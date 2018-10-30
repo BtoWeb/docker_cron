@@ -12,13 +12,10 @@ namespace App\Scheduler;
 use App\Entity\DockerJob;
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityRepository;
-use JMS\DiExtraBundle\Annotation as DI;
 use JMS\JobQueueBundle\Cron\JobScheduler;
 use JMS\JobQueueBundle\Entity\Job;
 
 /**
- * @DI\Service()
- * @DI\Tag("jms_job_queue.scheduler", attributes = {"command": "jms-job-queue:clean-up"})
  * Class JobPurgeScheduler
  * @package App\Scheduler
  */
@@ -49,9 +46,7 @@ class JobPurgeScheduler implements JobScheduler
     public function shouldSchedule($command, \DateTime $lastRunAt)
     {
         // Toutes les 30 minutes uniquement
-        if ((time() - $lastRunAt->getTimestamp()) >= 1800) {
-            return true;
-        }
+        return (time() - $lastRunAt->getTimestamp()) >= 1800;
     }
 
     /**
