@@ -18,6 +18,7 @@ use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use JMS\JobQueueBundle\Entity\Job;
+use Symfony\Bridge\Monolog\Logger;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -35,6 +36,11 @@ class DockerScheduleCommand extends ContainerAwareCommand
     protected $cronTaskRepository;
 
     /**
+     * @var Logger
+     */
+    protected $logger;
+
+    /**
      * @param CronTask $cronTask
      *
      * @return \DateTime|null
@@ -43,7 +49,7 @@ class DockerScheduleCommand extends ContainerAwareCommand
     {
         $cronString = $cronTask->getCron();
 
-        if ( ! $cronString && $cronTask->getInterval()) {
+        if (!$cronString && $cronTask->getInterval()) {
             $interval = str_replace(
                 [
                     'yearly',
@@ -68,24 +74,23 @@ class DockerScheduleCommand extends ContainerAwareCommand
 
             if (is_numeric($interval) && $interval >= 60) {
                 $minutes = floor($interval / 60);
-                $hours   = floor($minutes / 60);
+                $hours = floor($minutes / 60);
                 $minutes = $minutes % 60;
-                $days    = floor($hours / 24);
-                $hours   = $hours % 24;
+                $days = floor($hours / 24);
+                $hours = $hours % 24;
 
                 // Cas simple : Toutes les X minutes
 
-                if ( ! $days && ! $hours && $minutes) {
-                    $cronString = '*/'.$minutes.' * * * *';
+                if (!$days && !$hours && $minutes) {
+                    $cronString = '*/' . $minutes . ' * * * *';
                 }
+            } else {
+                $cronString = $interval;
             }
         }
 
-        if ( ! CronExpression::isValidExpression($cronString)) {
-            /*if ($cronString) {
-                var_dump($cronString);
-                exit();
-            }*/
+        if (!CronExpression::isValidExpression($cronString)) {
+            $this->logger->debug("CronTask#invalidCronExpression", ['CronTask' => $cronTask->getName(), 'expression' => $cronString] );
 
             return null;
         }
@@ -101,7 +106,6 @@ class DockerScheduleCommand extends ContainerAwareCommand
      *
      * @throws \Doctrine\ORM\NonUniqueResultException
      * @throws \Doctrine\ORM\ORMException
-     * @throws \Doctrine\ORM\OptimisticLockException
      */
     protected function runTask($cronTask, \DateTime $runDate)
     {
@@ -110,19 +114,19 @@ class DockerScheduleCommand extends ContainerAwareCommand
 
         /** @var DockerJob $dockerJob */
         $dockerJob = $dockerJobRepository->createQueryBuilder('d')
-                                         ->innerJoin('d.job', 'j')
-                                         ->where('d.cronTask = :task')
-                                         ->andWhere('j.executeAfter = :runDate')
-                                         ->setParameters(['task' => $cronTask, 'runDate' => $runDate])
-                                         ->getQuery()->getOneOrNullResult();
+            ->innerJoin('d.job', 'j')
+            ->where('d.cronTask = :task')
+            ->andWhere('j.executeAfter = :runDate')
+            ->setParameters(['task' => $cronTask, 'runDate' => $runDate])
+            ->getQuery()->getOneOrNullResult();
 
-        if ( ! $dockerJob) {
+        if (!$dockerJob) {
             $job = new Job('docker:execute', [$cronTask->getContainer(), $cronTask->getCommand(), $cronTask->getUser() ?? 'root'], true, $cronTask->getName());
             $job->setExecuteAfter($runDate);
 
             $dockerJob = new DockerJob();
             $dockerJob->setCronTask($cronTask)
-                      ->setJob($job);
+                ->setJob($job);
 
             $this->em->persist($dockerJob);
         }
@@ -135,13 +139,13 @@ class DockerScheduleCommand extends ContainerAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $logger = $this->getContainer()->get('logger');
+        $this->logger = $this->getContainer()->get('logger');
 
         while (true) {
-            $logger->info("Exécution du Scheduler pour les tâches docker");
+            $this->logger->info("Exécution du Scheduler pour les tâches docker");
             $start = time();
 
-            $this->em                 = $this->getContainer()->get('doctrine')->getManager();
+            $this->em = $this->getContainer()->get('doctrine')->getManager();
             $this->cronTaskRepository = $this->em->getRepository('App:CronTask');
 
             /** @var CronTask[] $cronTasks */
@@ -149,6 +153,8 @@ class DockerScheduleCommand extends ContainerAwareCommand
 
             foreach ($cronTasks as $cronTask) {
                 $runDate = $this->shouldRun($cronTask);
+
+                $this->logger->debug("CronTask#shouldRun", ['CronTask' => $cronTask->getName(), 'result' => $runDate]);
 
                 if ($runDate) {
                     try {
