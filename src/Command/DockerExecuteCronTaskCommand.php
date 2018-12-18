@@ -29,6 +29,7 @@ class DockerExecuteCronTaskCommand extends ContainerAwareCommand {
 	 * Nombre de process d'une même commande en train de fonctionner
 	 *
 	 * @param EntityRepository $jobRepository
+	 * @param CronTask $cronTask
 	 *
 	 * @return int
 	 * @throws \Doctrine\ORM\NonUniqueResultException
@@ -83,7 +84,8 @@ class DockerExecuteCronTaskCommand extends ContainerAwareCommand {
 		/////////////////////////////////////////
 		/// Compte le nombre d'exécutions en cours
 		if ( $this->getRunningJobCount( $jobRepository, $cronTask ) > $cronTask->getMax() ) {
-			$logger->err( "Le nombre maximum d'instances de cette tâche est déjà atteint", [ 'id' => $input->getArgument( 'id' ), $cronTask->getMax() ] );
+			$logger->err( "Le nombre maximum d'instances de cette tâche est déjà atteint",
+				[ 'id' => $input->getArgument( 'id' ), 'max' => $cronTask->getMax(), 'running' => $this->getRunningJobCount( $jobRepository, $cronTask ) ] );
 
 			return 1;
 		}
@@ -106,7 +108,7 @@ class DockerExecuteCronTaskCommand extends ContainerAwareCommand {
 
 
 		if ( ! $container ) {
-			$logger->error( "Container non trouvé", [ 'id' => $container->getId() ] );
+			$logger->error( "Container non trouvé", [ 'id' => $cronTask->getId() ] );
 
 			return 1;
 		}

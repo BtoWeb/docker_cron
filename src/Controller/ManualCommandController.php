@@ -18,45 +18,36 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
 
-class ManualCommandController extends Controller
-{
-    /**
-     * @Route("/")
-     * @Template()
-     * @param Request $request
-     *
-     * @return array|\Symfony\Component\HttpFoundation\RedirectResponse
-     */
-    public function indexAction(Request $request)
-    {
-        $em = $this->getDoctrine()->getManager();
-        /** @var EntityRepository $manualCommandRepository */
-        $manualCommandRepository = $em->getRepository('App\Entity\ManualCommand');
+class ManualCommandController extends Controller {
+	/**
+	 * @Route("/")
+	 * @Template()
+	 * @param Request $request
+	 *
+	 * @return array|\Symfony\Component\HttpFoundation\RedirectResponse
+	 */
+	public function indexAction( Request $request ) {
+		$em = $this->getDoctrine()->getManager();
+		/** @var EntityRepository $manualCommandRepository */
+		$manualCommandRepository = $em->getRepository( 'App\Entity\ManualCommand' );
 
-        if ($request->getMethod() == 'POST') {
-            $command = $request->get('command');
+		if ( $request->getMethod() == 'POST' ) {
+			$command = $request->get( 'command' );
 
-            /** @var ManualCommand $manualCommand */
-            $manualCommand = $manualCommandRepository->find($command);
-            $parameters    = $request->get('parameter') ?? [];
+			/** @var ManualCommand $manualCommand */
+			$manualCommand = $manualCommandRepository->find( $command );
 
-            if ($manualCommand && $manualCommand->isActive()) {
-                $commandLine = $manualCommand->getCommand();
+			if ( $manualCommand && $manualCommand->isActive() ) {
+				$job = new Job( 'docker:manualtask:execute', [ $manualCommand->getId() ], true, $manualCommand->getName() );
+				$em->persist( $job );
+				$em->flush();
 
-                foreach ($parameters as $name => $value) {
-                    $commandLine = str_replace('%'.$name.'%', escapeshellarg($value), $commandLine);
-                }
+				return $this->redirectToRoute( 'jms_jobs_details', [ 'id' => $job->getId() ] );
+			}
+		}
 
-                $job = new Job('docker:execute', [$manualCommand->getContainer(), $commandLine, $manualCommand->getUser() ?? 'root'], true, $manualCommand->getName());
-                $em->persist($job);
-                $em->flush();
-
-                return $this->redirectToRoute('jms_jobs_details', ['id' => $job->getId()]);
-            }
-        }
-
-        return [
-            'commands' => $manualCommandRepository->findBy(['active' => true]),
-        ];
-    }
+		return [
+			'commands' => $manualCommandRepository->findBy( [ 'active' => true ] ),
+		];
+	}
 }

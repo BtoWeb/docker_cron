@@ -143,6 +143,10 @@ class CronTaskScheduler implements JobScheduler {
 		} catch ( NonUniqueResultException $e ) {
 			// Si on a déjà plusieurs fois le job enregistré en base, on ne fait rien !
 			return false;
+		} catch ( \Exception $e ) {
+			// Cron invalide : On va éviter de re-vérifier tout ça
+			$this->nextCheck = new \DateTime("+1 year");
+			return false;
 		}
 
 		// Par défaut on ne fait rien
