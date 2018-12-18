@@ -165,7 +165,7 @@ class CronTaskScheduler implements JobScheduler {
 		$job->setExecuteAfter( $this->getCronExpression()->getNextRunDate() );
 
 		// On refera une vérif 1 minute avant le prochain run
-		$this->nextCheck = $this->getCronExpression()->getNextRunDate( $this->getCronExpression()->getNextRunDate() )->sub( new \DateInterval( 'PT1M' ) );
+		$this->nextCheck = $this->getCronExpression()->getNextRunDate( clone $job->getExecuteAfter() )->sub( new \DateInterval( 'PT1M' ) );
 
 		return $job;
 	}

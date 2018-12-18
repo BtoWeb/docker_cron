@@ -81,6 +81,8 @@ class DockerExecuteCronTaskCommand extends ContainerAwareCommand {
 			return 1;
 		}
 
+		$logger->notice( "Tâche", [ 'command' => $cronTask->getCommand(), 'user' => $cronTask->getUser() ] );
+
 		/////////////////////////////////////////
 		/// Compte le nombre d'exécutions en cours
 		if ( $this->getRunningJobCount( $jobRepository, $cronTask ) > $cronTask->getMax() ) {
