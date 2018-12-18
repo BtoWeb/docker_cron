@@ -17,8 +17,8 @@ class Kernel extends BaseKernel
 
     public function __construct(string $environment, bool $debug)
     {
-        date_default_timezone_set('Europe/Paris');
-        
+        date_default_timezone_set(getenv('TIMEZONE') ?? 'UTC');
+
         parent::__construct($environment, $debug);
     }
 

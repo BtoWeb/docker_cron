@@ -36,3 +36,7 @@ services:
         arguments: ["@doctrine"]
         tags:
             - { name: "jms_job_queue.scheduler", command: "jms-job-queue:clean-up" }
+
+    App\Scheduler\SchedulerRegistry:
+        decorates: "jms_job_queue.scheduler_registry"
+        arguments: ['@App\Scheduler\SchedulerRegistry.inner', '@doctrine']

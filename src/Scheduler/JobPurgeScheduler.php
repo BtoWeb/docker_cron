@@ -9,7 +9,6 @@
 namespace App\Scheduler;
 
 
-use App\Entity\DockerJob;
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityRepository;
 use JMS\JobQueueBundle\Cron\JobScheduler;
@@ -34,7 +33,6 @@ class JobPurgeScheduler implements JobScheduler
     public function __construct(Registry $registry)
     {
         $this->em = $registry->getManager();
-        $this->jobRepository = $registry->getRepository('App:DockerJob');
     }
 
     /**

@@ -31,12 +31,12 @@ class DockerWatchCommand extends ContainerAwareCommand
             $this->getContainer()->get('logger')->info("Event détecté", ['action' => $event->getAction(), 'container' => $event->getActor()->getID()]);
 
             $job      = new Job('docker:scan');
-            $runAfter = new \DateTime();
+            $executeAfter = new \DateTime();
             // On groupe les lancements : max 1 par minute (dans 1 minute !)
-            $runAfter->setTimestamp(mktime(null, null, 0) + 60);
-            $job->setExecuteAfter($runAfter);
+            $executeAfter->setTimestamp(mktime(null, null, 0) + 60);
+            $job->setExecuteAfter($executeAfter);
 
-            if ( ! $jobRepository->findOneBy(['command' => 'docker:scan', 'executeAfter' => $runAfter])) {
+            if ( ! $jobRepository->findOneBy(['command' => 'docker:scan', 'executeAfter' => $executeAfter])) {
                 $em->persist($job);
                 $em->flush();
             }
@@ -75,10 +75,10 @@ class DockerWatchCommand extends ContainerAwareCommand
         $em = $this->getContainer()->get('doctrine')->getManager();
 
         $job      = new Job('docker:scan');
-        $runAfter = new \DateTime();
+        $executeAfter = new \DateTime();
         // On groupe les lancements : max 1 par minute (dans 1 minute !)
-        $runAfter->setTimestamp(mktime(null, null, 0) + 60);
-        $job->setExecuteAfter($runAfter);
+        $executeAfter->setTimestamp(mktime(null, null, 0) + 60);
+        $job->setExecuteAfter($executeAfter);
         $em->persist($job);
         $em->flush();
 
