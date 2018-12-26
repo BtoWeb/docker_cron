@@ -18,36 +18,38 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
 
-class ManualCommandController extends Controller {
-	/**
-	 * @Route("/")
-	 * @Template()
-	 * @param Request $request
-	 *
-	 * @return array|\Symfony\Component\HttpFoundation\RedirectResponse
-	 */
-	public function indexAction( Request $request ) {
-		$em = $this->getDoctrine()->getManager();
-		/** @var EntityRepository $manualCommandRepository */
-		$manualCommandRepository = $em->getRepository( 'App\Entity\ManualCommand' );
+class ManualCommandController extends Controller
+{
+    /**
+     * @Route("/")
+     * @Template()
+     * @param Request $request
+     *
+     * @return array|\Symfony\Component\HttpFoundation\RedirectResponse
+     */
+    public function indexAction(Request $request)
+    {
+        $em = $this->getDoctrine()->getManager();
+        /** @var EntityRepository $manualCommandRepository */
+        $manualCommandRepository = $em->getRepository('App\Entity\ManualCommand');
 
-		if ( $request->getMethod() == 'POST' ) {
-			$command = $request->get( 'command' );
+        if ($request->getMethod() == 'POST') {
+            $command = $request->get('command');
 
-			/** @var ManualCommand $manualCommand */
-			$manualCommand = $manualCommandRepository->find( $command );
+            /** @var ManualCommand $manualCommand */
+            $manualCommand = $manualCommandRepository->find($command);
 
-			if ( $manualCommand && $manualCommand->isActive() ) {
-				$job = new Job( 'docker:manualtask:execute', [ $manualCommand->getId() ], true, $manualCommand->getName() );
-				$em->persist( $job );
-				$em->flush();
+            if ($manualCommand && $manualCommand->isActive()) {
+                $job = new Job('docker:manualtask:execute', [$manualCommand->getId(), json_encode($request->get('parameter') ?? [])], true, $manualCommand->getName());
+                $em->persist($job);
+                $em->flush();
 
-				return $this->redirectToRoute( 'jms_jobs_details', [ 'id' => $job->getId() ] );
-			}
-		}
+                return $this->redirectToRoute('jms_jobs_details', ['id' => $job->getId()]);
+            }
+        }
 
-		return [
-			'commands' => $manualCommandRepository->findBy( [ 'active' => true ] ),
-		];
-	}
+        return [
+            'commands' => $manualCommandRepository->findBy(['active' => true]),
+        ];
+    }
 }
