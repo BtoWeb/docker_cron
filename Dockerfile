@@ -1,6 +1,6 @@
-FROM php:7.3-apache
+FROM php:7.1-apache
 
-MAINTAINER Auurélien RICHAUD <aurelien.richaud@btoweb.fr>
+MAINTAINER Aurélien RICHAUD <aurelien.richaud@btoweb.fr>
 
 # Set Workdir
 WORKDIR /var/www
